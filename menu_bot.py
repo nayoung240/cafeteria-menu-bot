@@ -58,14 +58,30 @@ def upload_image(img_data):
 
 def post_to_teams(title, image_url):
     payload = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "summary": title,
-        "themeColor": "0078D4",
-        "title": f"🍱 {title}",
-        "sections": [
+        "type": "message",
+        "attachments": [
             {
-                "images": [{"image": image_url}]
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.4",
+                    "body": [
+                        {
+                            "type": "TextBlock",
+                            "text": f"🍱 {title}",
+                            "weight": "Bolder",
+                            "size": "Medium",
+                            "wrap": True
+                        },
+                        {
+                            "type": "Image",
+                            "url": image_url,
+                            "size": "Stretch",
+                            "msTeams": {"allowExpand": True}
+                        }
+                    ]
+                }
             }
         ]
     }
