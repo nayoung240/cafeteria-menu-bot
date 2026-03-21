@@ -7,8 +7,15 @@ import tempfile
 URL = "http://pvv.co.kr/bbs/index.php?code=bbs_menu01"
 WEBHOOK_URL = os.environ["TEAMS_WEBHOOK"]
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+}
+
+session = requests.Session()
+session.headers.update(HEADERS)
+
 def fetch_latest_post():
-    res = requests.get(URL, timeout=10)
+    res = session.get(URL, timeout=10)
     res.encoding = "euc-kr"
     soup = BeautifulSoup(res.text, "html.parser")
 
@@ -21,7 +28,7 @@ def fetch_latest_post():
     return title, post_url
 
 def fetch_pdf_url(post_url):
-    res = requests.get(post_url, timeout=10)
+    res = session.get(post_url, timeout=10)
     res.encoding = "euc-kr"
     soup = BeautifulSoup(res.text, "html.parser")
 
@@ -32,20 +39,21 @@ def fetch_pdf_url(post_url):
     return "http://pvv.co.kr/bbs/" + pdf_link["href"]
 
 def pdf_to_image(pdf_url):
-    headers = {
-        "Referer": "http://pvv.co.kr/bbs/index.php?code=bbs_menu01",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-    }
-    pdf_data = requests.get(pdf_url, headers=headers, timeout=30).content
+    # 게시글 페이지를 Referer로 설정해 다운로드
+    res = session.get(pdf_url, headers={"Referer": URL}, timeout=30)
+
+    # PDF 여부 확인
+    content_type = res.headers.get("Content-Type", "")
+    if "pdf" not in content_type.lower() and not res.content[:4] == b"%PDF":
+        raise ValueError(f"PDF가 아닌 응답: Content-Type={content_type}, 앞부분={res.content[:100]}")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         pdf_path = os.path.join(tmpdir, "menu.pdf")
         img_prefix = os.path.join(tmpdir, "menu")
 
         with open(pdf_path, "wb") as f:
-            f.write(pdf_data)
+            f.write(res.content)
 
-        # PDF 첫 페이지를 PNG로 변환 (poppler-utils 필요)
         subprocess.run(
             ["pdftoppm", "-png", "-r", "150", "-f", "1", "-l", "1", pdf_path, img_prefix],
             check=True
@@ -58,14 +66,13 @@ def pdf_to_image(pdf_url):
     return img_data
 
 def upload_image(img_data):
-    # catbox.moe 무료 이미지 호스팅 (API 키 불필요)
     res = requests.post(
         "https://catbox.moe/user/api.php",
         data={"reqtype": "fileupload"},
         files={"fileToUpload": ("menu.png", img_data, "image/png")},
         timeout=30
     )
-    return res.text.strip()  # 업로드된 이미지 URL 반환
+    return res.text.strip()
 
 def post_to_teams(title, image_url):
     payload = {
