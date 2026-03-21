@@ -32,7 +32,11 @@ def fetch_pdf_url(post_url):
     return "http://pvv.co.kr/bbs/" + pdf_link["href"]
 
 def pdf_to_image(pdf_url):
-    pdf_data = requests.get(pdf_url, timeout=30).content
+    headers = {
+        "Referer": "http://pvv.co.kr/bbs/index.php?code=bbs_menu01",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+    }
+    pdf_data = requests.get(pdf_url, headers=headers, timeout=30).content
 
     with tempfile.TemporaryDirectory() as tmpdir:
         pdf_path = os.path.join(tmpdir, "menu.pdf")
