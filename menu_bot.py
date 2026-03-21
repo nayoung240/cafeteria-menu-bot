@@ -29,7 +29,7 @@ def download_pdf(post_url):
         page = context.new_page()
         page.goto(post_url, wait_until="networkidle")
 
-        with context.expect_download() as download_info:
+        with page.expect_download() as download_info:
             page.click("a[href*='fileDown']")
 
         download = download_info.value
