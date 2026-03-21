@@ -17,5 +17,6 @@ jobs:
         env:
           TEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK }}
         run: |
+          sudo apt-get install -y poppler-utils -q
           pip install requests beautifulsoup4 -q
           python menu_bot.py
