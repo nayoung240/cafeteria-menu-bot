@@ -85,7 +85,9 @@ def post_to_teams(title, image_url):
             }
         ]
     }
-    requests.post(WEBHOOK_URL, json=payload, timeout=10)
+    res = requests.post(WEBHOOK_URL, json=payload, timeout=10)
+    print(f"Teams 응답: {res.status_code} / {res.text}")
+    res.raise_for_status()
 
 if __name__ == "__main__":
     title, post_url = fetch_latest_post()
