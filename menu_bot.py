@@ -115,7 +115,8 @@ def post_to_teams(title, image_url):
                         {
                             "type": "Image",
                             "url": image_url,
-                            "size": "Stretch"
+                            "size": "Stretch",
+                            "msTeams": {"allowExpand": True}
                         }
                     ]
                 }
