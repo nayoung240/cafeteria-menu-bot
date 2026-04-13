@@ -65,7 +65,7 @@ def post_to_teams(title, image_url):
                 "content": {
                     "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
                     "type": "AdaptiveCard",
-                    "version": "1.4",
+                    "version": "1.2",
                     "body": [
                         {
                             "type": "TextBlock",
@@ -77,8 +77,7 @@ def post_to_teams(title, image_url):
                         {
                             "type": "Image",
                             "url": image_url,
-                            "size": "Stretch",
-                            "msTeams": {"allowExpand": True}
+                            "size": "Stretch"
                         }
                     ]
                 }
