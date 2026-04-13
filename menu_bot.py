@@ -49,12 +49,15 @@ def pdf_to_image(pdf_path):
 
 def upload_image(img_data):
     res = requests.post(
-        "https://catbox.moe/user/api.php",
-        data={"reqtype": "fileupload"},
-        files={"fileToUpload": ("menu.png", img_data, "image/png")},
+        "https://0x0.st",
+        files={"file": ("menu.png", img_data, "image/png")},
         timeout=30
     )
-    return res.text.strip()
+    res.raise_for_status()
+    url = res.text.strip()
+    if not url.startswith("http"):
+        raise RuntimeError(f"이미지 업로드 실패: {url}")
+    return url
 
 def post_to_teams(title, image_url):
     payload = {
