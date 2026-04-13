@@ -41,7 +41,7 @@ def download_pdf(post_url):
 def pdf_to_image(pdf_path):
     img_prefix = "/tmp/menu"
     subprocess.run(
-        ["pdftoppm", "-png", "-r", "150", "-f", "1", "-l", "1", pdf_path, img_prefix],
+        ["pdftoppm", "-png", "-r", "300", "-f", "1", "-l", "1", pdf_path, img_prefix],
         check=True
     )
     with open("/tmp/menu-1.png", "rb") as f:
