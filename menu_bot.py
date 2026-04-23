@@ -49,9 +49,8 @@ def pdf_to_image(pdf_path):
 
 def upload_image(img_data):
     attempts = [
-        lambda: _upload_litterbox(img_data),
-        lambda: _upload_0x0(img_data),
         lambda: _upload_catbox(img_data),
+        lambda: _upload_0x0(img_data),
     ]
     for attempt in attempts:
         try:
@@ -61,25 +60,6 @@ def upload_image(img_data):
         except Exception as e:
             print(f"업로드 실패, 다음 서비스 시도: {e}")
     raise RuntimeError("모든 이미지 업로드 서비스 실패")
-
-def _upload_litterbox(img_data):
-    res = requests.post(
-        "https://litterbox.catbox.moe/resources/internals/api.php",
-        data={"reqtype": "fileupload", "time": "72h"},
-        files={"fileToUpload": ("menu.png", img_data, "image/png")},
-        timeout=30
-    )
-    res.raise_for_status()
-    return res.text.strip()
-
-def _upload_0x0(img_data):
-    res = requests.post(
-        "https://0x0.st",
-        files={"file": ("menu.png", img_data, "image/png")},
-        timeout=30
-    )
-    res.raise_for_status()
-    return res.text.strip()
 
 def _upload_catbox(img_data):
     res = requests.post(
@@ -93,6 +73,15 @@ def _upload_catbox(img_data):
     if not url.startswith("http"):
         raise RuntimeError(url)
     return url
+
+def _upload_0x0(img_data):
+    res = requests.post(
+        "https://0x0.st",
+        files={"file": ("menu.png", img_data, "image/png")},
+        timeout=30
+    )
+    res.raise_for_status()
+    return res.text.strip()
 
 def post_to_teams(title, image_url):
     payload = {
