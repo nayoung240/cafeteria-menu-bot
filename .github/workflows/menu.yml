@@ -5,6 +5,9 @@ on:
     - cron: '0 23 * * 0'  # 일요일 23:00 UTC = 월요일 08:00 KST
   workflow_dispatch:        # 수동 실행 버튼도 생김
 
+permissions:
+  contents: write
+
 jobs:
   send-menu:
     runs-on: ubuntu-latest
@@ -16,6 +19,7 @@ jobs:
       - name: Run menu bot
         env:
           TEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sudo apt-get install -y poppler-utils -q
           pip install requests beautifulsoup4 playwright -q

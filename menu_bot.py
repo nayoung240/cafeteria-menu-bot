@@ -2,11 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import subprocess
-import tempfile
+import base64
+from datetime import datetime, timezone, timedelta
 from playwright.sync_api import sync_playwright
 
 URL = "http://pvv.co.kr/bbs/index.php?code=bbs_menu01"
 WEBHOOK_URL = os.environ["TEAMS_WEBHOOK"]
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+REPO = "nayoung240/cafeteria-menu-bot"
 
 def fetch_latest_post():
     res = requests.get(URL, timeout=10)
@@ -48,40 +51,47 @@ def pdf_to_image(pdf_path):
         return f.read()
 
 def upload_image(img_data):
-    attempts = [
-        lambda: _upload_catbox(img_data),
-        lambda: _upload_0x0(img_data),
-    ]
-    for attempt in attempts:
-        try:
-            url = attempt()
-            if url.startswith("http"):
-                return url
-        except Exception as e:
-            print(f"업로드 실패, 다음 서비스 시도: {e}")
-    raise RuntimeError("모든 이미지 업로드 서비스 실패")
+    """GitHub repo에 이미지를 커밋하고 raw URL을 반환"""
+    kst = timezone(timedelta(hours=9))
+    now = datetime.now(kst)
+    file_path = f"images/menu_{now.strftime('%Y%m%d')}.png"
 
-def _upload_catbox(img_data):
-    res = requests.post(
-        "https://catbox.moe/user/api.php",
-        data={"reqtype": "fileupload"},
-        files={"fileToUpload": ("menu.png", img_data, "image/png")},
+    encoded = base64.b64encode(img_data).decode()
+
+    # 기존 파일이 있으면 sha 가져오기 (덮어쓰기용)
+    sha = None
+    check = requests.get(
+        f"https://api.github.com/repos/{REPO}/contents/{file_path}",
+        headers={
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github+json"
+        },
+        timeout=15
+    )
+    if check.status_code == 200:
+        sha = check.json().get("sha")
+
+    payload = {
+        "message": f"menu: {now.strftime('%Y-%m-%d')} 식단 이미지",
+        "content": encoded,
+    }
+    if sha:
+        payload["sha"] = sha
+
+    res = requests.put(
+        f"https://api.github.com/repos/{REPO}/contents/{file_path}",
+        json=payload,
+        headers={
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github+json"
+        },
         timeout=30
     )
     res.raise_for_status()
-    url = res.text.strip()
-    if not url.startswith("http"):
-        raise RuntimeError(url)
-    return url
 
-def _upload_0x0(img_data):
-    res = requests.post(
-        "https://0x0.st",
-        files={"file": ("menu.png", img_data, "image/png")},
-        timeout=30
-    )
-    res.raise_for_status()
-    return res.text.strip()
+    raw_url = f"https://raw.githubusercontent.com/{REPO}/main/{file_path}"
+    print(f"이미지 업로드 완료: {raw_url}")
+    return raw_url
 
 def post_to_teams(title, image_url):
     payload = {
