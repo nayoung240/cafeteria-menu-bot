@@ -21,6 +21,7 @@ jobs:
           TEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          sudo apt-get update -q
           sudo apt-get install -y poppler-utils -q
           pip install requests beautifulsoup4 playwright -q
           playwright install chromium
